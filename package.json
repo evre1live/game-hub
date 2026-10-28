@@ -1,0 +1,19 @@
+{
+  "name": "game-hub",
+  "private": true,
+  "description": "Три комнаты — 3D-хаб онлайн-игр «Дикий Запад», «ГРЯЗЬ» и «Под Землёй»",
+  "scripts": {
+    "build": "node tools/build.js",
+    "test": "node tools/check.js",
+    "images": "node tools/images.js"
+  },
+  "devDependencies": {
+    "@fontsource/cormorant-sc": "5.3.0",
+    "@fontsource/dela-gothic-one": "5.3.0",
+    "@fontsource/golos-text": "5.3.0",
+    "@fontsource/podkova": "5.3.0",
+    "@fontsource/unbounded": "5.3.0",
+    "playwright": "1.63.0",
+    "three": "0.160.0"
+  }
+}

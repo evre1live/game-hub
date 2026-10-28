@@ -1,0 +1,18 @@
+# Бесплатный статический сайт на Render: не засыпает, отдаётся через CDN.
+# Render соберёт public/index.html из src/ и опубликует папку public.
+services:
+  - type: web
+    name: game-hub
+    runtime: static
+    buildCommand: node tools/build.js
+    staticPublishPath: ./public
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /
+        name: Cache-Control
+        value: no-cache

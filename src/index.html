@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Три комнаты</title>
+<meta name="description" content="Клуб настольных игр онлайн: «Дикий Запад», «ГРЯЗЬ» и «Под Землёй». Выберите комнату и играйте с друзьями в браузере.">
+<meta name="theme-color" content="#07080b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Три комнаты — клуб настольных игр онлайн">
+<meta property="og:description" content="«Дикий Запад», «ГРЯЗЬ» и «Под Землёй». Выберите комнату и играйте с друзьями в браузере.">
+<meta property="og:image" content="https://game-hub.onrender.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307080b'/%3E%3Crect x='10' y='22' width='12' height='30' rx='6' fill='%23f0a64e'/%3E%3Crect x='26' y='14' width='12' height='38' rx='6' fill='%23ff2a44'/%3E%3Crect x='42' y='22' width='12' height='30' rx='6' fill='%234fd39b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@700&family=Dela+Gothic+One&family=Golos+Text:wght@400;500;600;700&family=Podkova:wght@700;800&family=Unbounded:wght@600;800&display=swap">
+<style>
+:root {
+  /* Ночной клуб из трёх комнат-диорам. Каждая комната живёт в своём цвете,
+     интерфейс берёт подсветку у выбранной. Сцена во весь экран, интерфейс поверх. */
+  --bg: #07080b;
+  --ink: #efe9de;
+  --muted: #a49d92;
+  --line: rgba(239, 233, 222, .13);
+  --west: #f0a64e;
+  --gryaz: #ff2a44;
+  --under: #4fd39b;
+  --accent: #efe9de;
+  --display: 'Dela Gothic One', 'Golos Text', system-ui, sans-serif;
+  --body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body);
+  overflow: hidden; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; outline: none; }
+body.can-click #scene { cursor: pointer; }
+body.dragging #scene { cursor: grabbing; }
+
+.ui { position: fixed; inset: 0; pointer-events: none; }
+.ui > * { pointer-events: auto; }
+
+/* ---------- бренд */
+.brand { position: absolute; top: 24px; left: 28px; display: flex; gap: 14px; align-items: center; text-decoration: none; color: inherit; }
+.brand-mark { display: flex; gap: 4px; align-items: flex-end; height: 36px; }
+.brand-mark i { width: 10px; height: 26px; border-radius: 6px 6px 2px 2px; background: var(--c); box-shadow: 0 0 14px -2px var(--c); }
+.brand-mark i:nth-child(2) { height: 36px; }
+.brand-name { font-family: var(--display); font-size: clamp(20px, 2vw, 27px); letter-spacing: .03em; line-height: 1; }
+.brand-sub { margin-top: 7px; font-size: 13px; color: var(--muted); }
+
+/* ---------- переключатель комнат */
+.switch {
+  position: absolute; top: 22px; right: 28px; display: flex; gap: 4px; padding: 5px;
+  border-radius: 14px; background: rgba(12, 13, 17, .62); border: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.sw {
+  appearance: none; border: 0; background: transparent; color: var(--muted); cursor: pointer;
+  font-size: 14px; font-weight: 500; line-height: 1; padding: 11px 14px; border-radius: 10px;
+  display: flex; gap: 9px; align-items: center; white-space: nowrap; transition: background .2s, color .2s, box-shadow .2s;
+}
+.sw b { font: 400 11px/1 var(--display); color: var(--c); letter-spacing: .06em; }
+.sw:hover { color: var(--ink); background: rgba(255, 255, 255, .05); }
+.sw[aria-pressed="true"] { color: var(--ink); background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 60%, transparent); }
+
+/* ---------- подписи под комнатами */
+.tags { position: absolute; inset: 0; pointer-events: none; }
+.tag {
+  position: absolute; left: 0; top: 0; pointer-events: auto; appearance: none; border: 0; background: none; cursor: pointer;
+  display: grid; justify-items: center; gap: 5px; padding: 10px 16px 12px; border-radius: 14px; text-align: center;
+  transition: opacity .4s ease, background .25s; will-change: transform;
+}
+.tag:hover, .tag.hot { background: rgba(10, 11, 15, .55); }
+.tag-num { font: 400 11px/1 var(--display); color: var(--c); letter-spacing: .14em; }
+.tag-name { font-size: clamp(22px, 2.1vw, 30px); line-height: 1.02; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .85)); }
+.tag-meta { font-size: 13px; color: var(--muted); text-shadow: 0 1px 6px rgba(0, 0, 0, .9); }
+.tag-cta {
+  margin-top: 3px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--c);
+  opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s;
+}
+.tag:hover .tag-cta, .tag.hot .tag-cta, .tag:focus-visible .tag-cta { opacity: 1; transform: none; }
+body.is-focus .tag, body.is-loading .tag { opacity: 0; pointer-events: none; }
+
+/* фирменные названия игр */
+.t-west {
+  font-family: 'Podkova', Georgia, serif; font-weight: 800; letter-spacing: .01em;
+  background: linear-gradient(180deg, #f8e6b8 0%, #e0b468 48%, #a8772f 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.t-gryaz { font-family: 'Unbounded', var(--body); font-weight: 800; color: #ff2a44; letter-spacing: -.01em; }
+.t-under { font-family: 'Cormorant SC', Georgia, serif; font-weight: 700; color: #e4b968; letter-spacing: .02em; }
+
+/* ---------- панель игры */
+.panel {
+  position: absolute; top: 90px; right: 28px; width: 384px; max-height: calc(100% - 118px);
+  display: flex; flex-direction: column; gap: 16px; padding: 22px 26px 20px; overflow: hidden;
+  border-radius: 22px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(17, 18, 24, .88), rgba(9, 10, 14, .92));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .05);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  opacity: 0; transform: translateX(34px); pointer-events: none; visibility: hidden;
+  transition: opacity .45s ease, transform .6s cubic-bezier(.2, .8, .2, 1), visibility 0s .6s;
+}
+.panel::before {
+  content: ''; position: absolute; left: 26px; right: 26px; top: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent); box-shadow: 0 0 18px var(--accent);
+}
+body.is-focus .panel { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition: opacity .45s ease .1s, transform .6s cubic-bezier(.2, .8, .2, 1) .1s, visibility 0s; }
+.panel.swap .p-body, .panel.swap .p-foot { opacity: 0; transform: translateY(6px); }
+.p-body {
+  display: flex; flex-direction: column; gap: 16px; flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  margin: 0 -8px; padding: 2px 8px; transition: opacity .2s, transform .2s; scrollbar-width: thin;
+}
+.p-body.scrolls { -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); padding-bottom: 22px; }
+.p-foot { flex: none; display: flex; flex-direction: column; gap: 10px; transition: opacity .2s, transform .2s; }
+.p-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.p-back, .p-arrow {
+  appearance: none; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); color: var(--ink); cursor: pointer;
+  border-radius: 10px; font-size: 13px; font-weight: 500; transition: background .2s, border-color .2s;
+}
+.p-back { padding: 9px 12px; }
+.p-arrow { width: 38px; height: 34px; font-size: 16px; line-height: 1; }
+.p-back:hover, .p-arrow:hover { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .25); }
+.p-count { font: 400 12px/1 var(--display); color: var(--muted); letter-spacing: .1em; display: flex; align-items: center; gap: 8px; }
+.p-kicker { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.p-title { margin: -6px 0 0; font-size: clamp(38px, 3.6vw, 50px); line-height: 1; text-wrap: balance; }
+.p-tag { margin: 0; font-size: 18px; line-height: 1.4; text-wrap: balance; }
+.p-text { margin: 0; font-size: 15px; line-height: 1.58; color: var(--muted); }
+.p-facts {
+  margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; overflow: hidden;
+  background: var(--line); border: 1px solid var(--line); border-radius: 14px;
+}
+.p-facts div { background: #0d0e12; padding: 12px 14px; }
+.p-facts div.wide { grid-column: 1 / -1; }
+.p-facts dt { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.p-facts dd { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.p-play {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 17px 20px; border-radius: 16px; background: var(--accent); color: #0a0a0c; text-decoration: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15), 0 12px 44px -10px var(--accent);
+  transition: transform .2s, box-shadow .2s;
+}
+.p-play:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2), 0 18px 54px -8px var(--accent); }
+.p-play b { font: 400 22px/1 var(--display); letter-spacing: .02em; }
+.p-play small { display: block; margin-top: 6px; font-size: 12px; font-weight: 500; opacity: .72; }
+.p-play i { font-style: normal; font-size: 24px; line-height: 1; }
+.p-note { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+
+/* ---------- подсказка */
+.hint { position: absolute; left: 28px; bottom: 24px; display: flex; gap: 18px; align-items: center; font-size: 13px; color: var(--muted); transition: opacity .4s; }
+.hint span { display: flex; gap: 7px; align-items: center; }
+.hint kbd { font: 500 11px/1 var(--body); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); color: var(--ink); background: rgba(255, 255, 255, .03); }
+body.is-focus .hint, body.is-loading .hint { opacity: 0; pointer-events: none; }
+
+/* ---------- загрузка */
+.loader { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--bg); transition: opacity .9s ease .15s, visibility 0s 1.1s; }
+body:not(.is-loading) .loader { opacity: 0; visibility: hidden; }
+.loader-doors { display: flex; gap: 10px; align-items: flex-end; justify-content: center; }
+.loader-doors i { width: 24px; height: 44px; border-radius: 12px 12px 2px 2px; border: 2px solid var(--c); box-shadow: 0 0 22px -6px var(--c); animation: door 1.5s ease-in-out infinite; opacity: .2; }
+.loader-doors i:nth-child(2) { height: 56px; animation-delay: .2s; }
+.loader-doors i:nth-child(3) { animation-delay: .4s; }
+@keyframes door { 0%, 100% { opacity: .2; } 45% { opacity: 1; } }
+.loader p { margin: 20px 0 0; font-size: 14px; color: var(--muted); letter-spacing: .03em; text-align: center; }
+
+/* ---------- без WebGL: обычные карточки */
+.tags.static { inset: 120px 24px 96px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; align-content: center; pointer-events: auto; overflow-y: auto; }
+.tags.static .tag { position: static; transform: none !important; padding: 30px 20px; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); }
+.tags.static .tag-cta { opacity: 1; transform: none; }
+
+@media (max-width: 1100px) {
+  .sw span { display: none; }
+  .sw { padding: 11px 12px; }
+}
+@media (max-width: 760px) {
+  .brand { top: 16px; left: 16px; gap: 11px; }
+  .brand-mark { height: 30px; }
+  .brand-mark i { width: 8px; height: 21px; }
+  .brand-mark i:nth-child(2) { height: 30px; }
+  .brand-sub { font-size: 12px; margin-top: 5px; }
+  .switch { top: auto; right: 12px; left: 12px; bottom: 12px; justify-content: stretch; transition: opacity .35s, transform .35s; }
+  .sw { flex: 1; justify-content: center; padding: 12px 6px; font-size: 13px; }
+  .sw span { display: inline; }
+  body.is-focus .switch { opacity: 0; transform: translateY(20px); pointer-events: none; }
+  .hint { display: none; }
+  .tag { padding: 6px 10px 8px; gap: 3px; }
+  .tag-name { font-size: 21px; }
+  .tag-meta { font-size: 12px; }
+  .tag-cta { display: none; }
+}
+/* панель снизу: телефоны и планшеты в портрете */
+@media (max-width: 760px), (max-aspect-ratio: 17/20) {
+  .panel {
+    top: auto; left: 10px; right: 10px; bottom: 10px; width: auto; max-width: 640px; margin: 0 auto; max-height: 56%;
+    padding: 18px 18px 16px; gap: 14px; border-radius: 20px; transform: translateY(40px);
+  }
+  .panel::before { left: 18px; right: 18px; }
+  .p-body { gap: 12px; }
+  .p-foot { gap: 8px; }
+  .p-note { font-size: 12px; }
+  .p-title { font-size: 34px; }
+  .p-tag { font-size: 16px; }
+  .p-text { font-size: 14px; }
+  .p-play { padding: 15px 16px; }
+  .p-play b { font-size: 20px; }
+}
+body.portrait .tag-num { display: none; }
+body.portrait .tag { padding: 4px 10px 6px; }
+@media (max-width: 380px) { .sw span { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .15s !important; }
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body class="is-loading">
+<canvas id="scene" tabindex="-1" aria-label="Три игровые комнаты в 3D: салун, неоновый лаунж и подземелье"></canvas>
+
+<div class="ui">
+  <div class="brand" aria-label="Три комнаты — клуб настольных игр">
+    <div class="brand-mark" aria-hidden="true"><i style="--c:var(--west)"></i><i style="--c:var(--gryaz)"></i><i style="--c:var(--under)"></i></div>
+    <div>
+      <div class="brand-name">ТРИ КОМНАТЫ</div>
+      <div class="brand-sub">Клуб настольных игр · играйте с друзьями онлайн</div>
+    </div>
+  </div>
+
+  <nav class="switch" id="switch" aria-label="Комнаты"></nav>
+  <div class="tags" id="tags"></div>
+
+  <aside class="panel" id="panel" aria-labelledby="p-title">
+    <div class="p-top">
+      <button class="p-back" id="p-back" type="button">← Все комнаты</button>
+      <div class="p-count">
+        <button class="p-arrow" id="p-prev" type="button" aria-label="Предыдущая комната">←</button>
+        <span id="p-count">01 / 03</span>
+        <button class="p-arrow" id="p-next" type="button" aria-label="Следующая комната">→</button>
+      </div>
+    </div>
+    <div class="p-body" id="p-body"></div>
+    <div class="p-foot" id="p-foot"></div>
+  </aside>
+
+  <div class="hint" id="hint">
+    <span>Нажмите на комнату, чтобы войти</span>
+    <span>Перетащите, чтобы осмотреться</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> комнаты · <kbd>Esc</kbd> назад</span>
+  </div>
+</div>
+
+<div class="loader" aria-hidden="true">
+  <div>
+    <div class="loader-doors"><i style="--c:var(--west)"></i><i style="--c:var(--gryaz)"></i><i style="--c:var(--under)"></i></div>
+    <p>Открываем двери…</p>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
